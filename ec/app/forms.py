@@ -3,6 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm,Usern
 from django.contrib.auth.models import User 
 
 from .models import Customer
+from django.core.exceptions import ValidationError  # This import is not explicitly shown in your provided code, but it's necessary for using forms.ValidationError
 
 class LoginForm(AuthenticationForm):
     username = UsernameField(widget=forms.TextInput(attrs={'autofocus':'True','class':'form-control'}))
@@ -18,6 +19,7 @@ class CustomerRegistrationForm(UserCreationForm):
         model = User
         fields = ['username','email','password1','password2']
 
+
 class MyPasswordResetForm(PasswordChangeForm):
     pass 
 
@@ -29,7 +31,9 @@ class CustomerProfileForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class':'form-control'}),
             'locality':forms.TextInput(attrs={'class': 'form-control'}),
             'city':forms.TextInput(attrs={'class': 'form-control'}),
-            'mobile':forms.NumberInput(attrs={'class': 'form-control'}),
+            'mobile':forms.TextInput(attrs={'class': 'form-control', 'type': 'number', 'pattern': '\d{10}', 'title': 'Mobile number must be 10 digits long'}),
             'state': forms.Select(attrs={'class': 'form-control'}),
-            'zipcode':forms.NumberInput(attrs={'class':'form-control'}),
+            'zipcode':forms.TextInput(attrs={'class':'form-control', 'type': 'number', 'pattern': '\d{6}', 'title': 'Mobile number must be 6 digits long'}),
         }
+    
+    
