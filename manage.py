@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os
@@ -6,6 +7,10 @@ import sys
 
 def main():
     """Run administrative tasks."""
+    # Check if we are in a virtual environment and activate it
+    activate_this = os.path.join(os.getcwd(), 'venv', 'bin', 'activate_this.py')
+    exec(open(activate_this).read(), dict(__file__=activate_this))
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ec.settings')
     try:
         from django.core.management import execute_from_command_line
@@ -20,4 +25,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
