@@ -10,7 +10,7 @@ from django.urls import path
 from .views import custom_logout
 
 urlpatterns = [
-    path('', views.home),
+    path('', views.home, name='home'),
     path('about/', views.about,name="about"),
     path('contact/',views.contact,name="contact"),
     path('category/<slug:val>', views.CategoryView.as_view(),name="category"),
@@ -23,10 +23,17 @@ urlpatterns = [
     path('add-to-cart/',views.add_to_cart,name='add-to-cart'),
     path('cart/',views.show_cart,name='showcart'),
     path('checkout/',views.checkout.as_view(),name='checkout'),
+    path('orders/',views.orders,name='orders'),
 
     path('pluscart/',views.plus_cart),
     path('minuscart/',views.minus_cart),
     path('removecart/',views.remove_cart),
+    
+    # Search and Wishlist
+    path('search/',views.search,name='search'),
+    path('wishlist/',views.show_wishlist,name='wishlist'),
+    path('add-to-wishlist/',views.add_to_wishlist,name='add-to-wishlist'),
+    path('remove-from-wishlist/',views.remove_from_wishlist,name='remove-from-wishlist'),
 
 
     #login authentication

@@ -5,7 +5,7 @@ from django.views import View
 from .models import Product
 from . forms import CustomerProfileForm,CustomerRegistrationForm
 from django.contrib import messages
-from .models import Customer,Cart
+from .models import Customer,Cart,Wishlist,OrderPlaced,Payment
 from django.http import JsonResponse
 
 from django.contrib.auth import logout
@@ -116,7 +116,10 @@ def add_to_cart(request):
     user=request.user
     product_id = request.GET.get('prod_id')
     product = Product.objects.get(id=product_id)
-    Cart(user=user,product=product).save()
+    cart_item, created = Cart.objects.get_or_create(user=user, product=product)
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save()
     return redirect("/cart")
 
 
@@ -130,24 +133,20 @@ def show_cart(request):
     totalamount=amount+40
     return render(request,'app/addtocart.html',locals())
 
-class checkout(View):
-    def get(self,request):
-        user=request.user
-        add=Customer.objects.filter(user=user)
-        cart_items=Cart.objects.filter(user=user)
-        famount=0
-        for p in cart_items:
-            value=p.quantity*p.product.discounted_price
-            famount=famount+value
-        totalamount=famount+40
-        return render(request,'app/checkout.html',locals())
-
 def plus_cart(request):
     if request.method =='GET':
         prod_id=request.GET['prod_id']
-        c=Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
-        c.quantity+=1
-        c.save()
+        try:
+            c=Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
+            c.quantity+=1
+            c.save()
+        except Cart.DoesNotExist:
+            return JsonResponse({'error': 'Cart item not found'}, status=404)
+        except Cart.MultipleObjectsReturned:
+            c=Cart.objects.filter(Q(product=prod_id) & Q(user=request.user)).first()
+            c.quantity+=1
+            c.save()
+        
         user=request.user
         cart=Cart.objects.filter(user=user)
         amount=0
@@ -155,7 +154,6 @@ def plus_cart(request):
             value=p.quantity*p.product.discounted_price
             amount=amount+value
         totalamount=amount+40
-        # print(prod_id)
         data={
             'quantity':c.quantity,
             'amount':amount,
@@ -166,9 +164,25 @@ def plus_cart(request):
 def minus_cart(request):
     if request.method =='GET':
         prod_id=request.GET['prod_id']
-        c=Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
-        c.quantity-=1
-        c.save()
+        try:
+            c=Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
+            c.quantity-=1
+            if c.quantity <= 0:
+                c.delete()
+                c.quantity = 0
+            else:
+                c.save()
+        except Cart.DoesNotExist:
+            return JsonResponse({'error': 'Cart item not found'}, status=404)
+        except Cart.MultipleObjectsReturned:
+            c=Cart.objects.filter(Q(product=prod_id) & Q(user=request.user)).first()
+            c.quantity-=1
+            if c.quantity <= 0:
+                c.delete()
+                c.quantity = 0
+            else:
+                c.save()
+        
         user=request.user
         cart=Cart.objects.filter(user=user)
         amount=0
@@ -176,7 +190,6 @@ def minus_cart(request):
             value=p.quantity*p.product.discounted_price
             amount=amount+value
         totalamount=amount+40
-        # print(prod_id)
         data={
             'quantity':c.quantity,
             'amount':amount,
@@ -187,8 +200,14 @@ def minus_cart(request):
 def remove_cart(request):
     if request.method =='GET':
         prod_id=request.GET['prod_id']
-        c=Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
-        c.delete()
+        try:
+            c=Cart.objects.get(Q(product=prod_id) & Q(user=request.user))
+            c.delete()
+        except Cart.DoesNotExist:
+            return JsonResponse({'error': 'Cart item not found'}, status=404)
+        except Cart.MultipleObjectsReturned:
+            Cart.objects.filter(Q(product=prod_id) & Q(user=request.user)).delete()
+        
         user=request.user
         cart=Cart.objects.filter(user=user)
         amount=0
@@ -196,10 +215,120 @@ def remove_cart(request):
             value=p.quantity*p.product.discounted_price
             amount=amount+value
         totalamount=amount+40
-        # print(prod_id)
         data={
             'amount':amount,
             'totalamount':totalamount
         }
         return JsonResponse(data)
+
+# Search functionality
+def search(request):
+    query = request.GET.get('search')
+    if query:
+        products = Product.objects.filter(
+            Q(title__icontains=query) | 
+            Q(description__icontains=query) |
+            Q(category__icontains=query)
+        )
+    else:
+        products = Product.objects.all()
+    return render(request, 'app/search.html', {'products': products, 'query': query})
+
+# Wishlist functionality
+def add_to_wishlist(request):
+    user = request.user
+    product_id = request.GET.get('prod_id')
+    product = Product.objects.get(id=product_id)
+    wishlist_item, created = Wishlist.objects.get_or_create(user=user, product=product)
+    if created:
+        return JsonResponse({'message': 'Added to wishlist'})
+    else:
+        return JsonResponse({'message': 'Already in wishlist'})
+
+def remove_from_wishlist(request):
+    user = request.user
+    product_id = request.GET.get('prod_id')
+    try:
+        wishlist_item = Wishlist.objects.get(user=user, product_id=product_id)
+        wishlist_item.delete()
+        return JsonResponse({'message': 'Removed from wishlist'})
+    except Wishlist.DoesNotExist:
+        return JsonResponse({'message': 'Item not in wishlist'})
+
+def show_wishlist(request):
+    user = request.user
+    wishlist = Wishlist.objects.filter(user=user)
+    return render(request, 'app/wishlist.html', {'wishlist': wishlist})
+
+# Updated checkout to handle POST
+class checkout(View):
+    def get(self,request):
+        user=request.user
+        add=Customer.objects.filter(user=user)
+        cart_items=Cart.objects.filter(user=user)
+        
+        if not cart_items.exists():
+            messages.error(request, "Your cart is empty! Add some products to proceed.")
+            return redirect('showcart')
+        
+        if not add.exists():
+            messages.error(request, "Please add a shipping address before checkout!")
+            return redirect('profile')
+        
+        famount=0
+        for p in cart_items:
+            value=p.quantity*p.product.discounted_price
+            famount=famount+value
+        totalamount=famount+40
+        return render(request,'app/checkout.html',locals())
+    
+    def post(self, request):
+        user = request.user
+        custid = request.POST.get('custid')
+        totalamount = request.POST.get('totalamount')
+        
+        if not custid:
+            messages.error(request, "Please select a shipping address!")
+            return redirect('checkout')
+        
+        try:
+            customer = Customer.objects.get(id=custid)
+        except Customer.DoesNotExist:
+            messages.error(request, "Selected address not found. Please add a new address.")
+            return redirect('profile')
+        
+        cart_items = Cart.objects.filter(user=user)
+        
+        if not cart_items.exists():
+            messages.error(request, "Your cart is empty!")
+            return redirect('showcart')
+        
+        # Create payment record
+        payment = Payment.objects.create(
+            user=user,
+            amount=totalamount,
+            paid=True
+        )
+        
+        # Create order records
+        for item in cart_items:
+            OrderPlaced.objects.create(
+                user=user,
+                customer=customer,
+                product=item.product,
+                quantity=item.quantity,
+                payment=payment,
+                status='Accepted'
+            )
+        
+        # Clear cart
+        cart_items.delete()
+        
+        messages.success(request, "Order placed successfully!")
+        return redirect('orders')
+
+def orders(request):
+    user = request.user
+    orders = OrderPlaced.objects.filter(user=user).order_by('-ordered_date')
+    return render(request, 'app/orders.html', {'orders': orders})
     

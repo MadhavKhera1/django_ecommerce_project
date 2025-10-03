@@ -79,13 +79,14 @@ $('.plus-wishlist').click(function(){
     var id=$(this).attr("pid").toString();
     $.ajax({
         type:"GET",
-        url:"/pluswishlist",
+        url:"/add-to-wishlist",
         data:{
             prod_id:id
         },
         success:function(data){
-            //alert(data.message)
-            window.location.href = `http://localhost:8000/product-detail/${id}`
+            alert(data.message)
+            // Update wishlist count in navbar
+            location.reload();
         }
     })
 })
@@ -95,12 +96,14 @@ $('.minus-wishlist').click(function(){
     var id=$(this).attr("pid").toString();
     $.ajax({
         type:"GET",
-        url:"/minuswishlist",
+        url:"/remove-from-wishlist",
         data:{
             prod_id:id
         },
         success:function(data){
-            window.location.href = `http://localhost:8000/product-detail/${id}`
+            alert(data.message)
+            // Update wishlist count in navbar
+            location.reload();
         }
     })
 })

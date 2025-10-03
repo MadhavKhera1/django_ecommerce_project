@@ -81,9 +81,19 @@ class Cart(models.Model):
     product=models.ForeignKey(Product,on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
 
+    class Meta:
+        unique_together = ('user', 'product')
+
     @property
     def total_cost(self):
         return self.quantity * self.product.discounted_price
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    product=models.ForeignKey(Product,on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ('user', 'product')
 
 STATUS_CHOICES =(
     ('Accepted','Accepted'),

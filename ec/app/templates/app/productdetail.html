@@ -23,6 +23,9 @@
                         <button type="submit" class="btn btn-primary shadow px-5 py-2">Add to Cart</button>
                     </form>
                     <a href="{% url 'showcart' %}" class="btn btn-warning shadow px-5 py-2 ms-4">Buy Now</a>
+                    <a href="{% url 'add-to-wishlist' %}?prod_id={{product.id}}" class="btn btn-outline-danger shadow px-5 py-2 ms-4 plus-wishlist" pid="{{product.id}}">
+                        <i class="fas fa-heart"></i> Add to Wishlist
+                    </a>
             </div>  
             <!--hello-->
         </div>
