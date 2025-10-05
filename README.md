@@ -12,7 +12,7 @@ A fully functional ecommerce website built with Django, featuring product catalo
 - **Order Management**: Complete checkout process with order history
 - **Admin Panel**: Full admin interface for managing products, users, and orders
 - **Responsive Design**: Mobile-friendly interface with Bootstrap
-- **Payment Integration**: Basic payment system (ready for Razorpay integration)
+- **Payment Integration**: Basic payment system
 
 ## 🚀 Quick Start
 
@@ -195,5 +195,6 @@ For production deployment, make sure to:
 - All contributors who helped improve this project
 
 ---
+
 
 **Happy Shopping! 🛒✨**
