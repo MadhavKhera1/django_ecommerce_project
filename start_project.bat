@@ -4,7 +4,7 @@ echo    Starting Ecommerce Project
 echo ========================================
 
 REM Navigate to project directory
-cd /d "C:\Users\91884\Desktop\KJC\ecomm"
+cd /d "%~dp0"
 
 REM Activate virtual environment
 echo Activating virtual environment...
@@ -13,10 +13,6 @@ call .\env\Scripts\activate.bat
 REM Install/update requirements (including Pillow)
 echo Installing/updating requirements...
 pip install -r requirements.txt
-
-REM Set Python path
-echo Setting Python path...
-set PYTHONPATH=C:\Users\91884\Desktop\KJC\ecomm\ec
 
 REM Run migrations
 echo Running database migrations...

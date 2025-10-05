@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app',
+    'ec.app',
 ]
 
 MIDDLEWARE = [
@@ -63,7 +63,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'app.context_processors.cart_wishlist_count',
+                'ec.app.context_processors.cart_wishlist_count',
             ],
         },
     },
